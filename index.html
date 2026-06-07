@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Thư Mời Lễ Tốt Nghiệp - Nguyễn Kim Thịnh</title>
+
+    <meta name="description" content="Thư mời tham dự lễ tốt nghiệp của Nguyễn Kim Thịnh tại Trường Đại học Thủ Dầu Một, ngày 22/06/2026 từ 12:30 đến 16:30.">
+    <meta property="og:title" content="Thư Mời Lễ Tốt Nghiệp - Nguyễn Kim Thịnh">
+    <meta property="og:description" content="Lễ Tốt Nghiệp ngày 22/06/2026, 12:30 – 16:30 tại ĐH Thủ Dầu Một. Rất mong được đón tiếp bạn!">
+    <meta property="og:image" content="assets/user_photo.jpg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=41">
+</head>
+<body>
+
+    <div class="bg-mesh" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="stars" aria-hidden="true"></div>
+    </div>
+    <audio id="bgMusic" loop preload="auto" src="assets/background-music.mp3" aria-hidden="true"></audio>
+    <canvas id="sparkleCanvas"></canvas>
+
+    <div id="loader" role="button" tabindex="0" aria-label="Chạm để mở thiệp mời">
+        <div class="loader-envelope">
+            <div class="loader-flap"></div>
+            <div class="loader-body">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <p class="loader-title">Lễ Tốt Nghiệp 2026</p>
+                <p class="loader-name">Nguyễn Kim Thịnh</p>
+            </div>
+            <p class="loader-tap-hint">Chạm để mở thiệp <i class="fa-solid fa-chevron-down"></i></p>
+        </div>
+    </div>
+
+    <div class="app">
+
+        <header class="topbar">
+            <a href="#" class="topbar-brand">
+                <span class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                <span class="brand-text">Kim Thịnh</span>
+            </a>
+            <div class="topbar-nav-wrap" id="topbarNavWrap">
+                <span class="nav-scroll-hint nav-scroll-hint-left" aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
+                <nav class="topbar-nav" id="topbarNav" aria-label="Điều hướng">
+                    <a href="#invite" class="nav-pill">Lời mời</a>
+                    <a href="#program" class="nav-pill">Lịch trình</a>
+                    <a href="#map" class="nav-pill">Địa điểm</a>
+                    <a href="#rsvp-section" class="nav-pill nav-pill-cta">RSVP</a>
+                </nav>
+                <span class="nav-scroll-hint nav-scroll-hint-right" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
+            </div>
+            <button id="musicToggle" class="fab-music topbar-music" aria-label="Bật/Tắt nhạc nền">
+                <i class="fa-solid fa-music"></i>
+            </button>
+        </header>
+
+        <main class="main">
+
+            <!-- HERO -->
+            <section class="hero section-reveal">
+                <div class="wrap">
+                    <div class="bento-hero">
+                        <div class="bento-photo card-glass card-shine">
+                            <div class="photo-glow" aria-hidden="true"></div>
+                            <div class="photo-corner photo-corner-tl" aria-hidden="true"></div>
+                            <div class="photo-corner photo-corner-tr" aria-hidden="true"></div>
+                            <div class="photo-corner photo-corner-bl" aria-hidden="true"></div>
+                            <div class="photo-corner photo-corner-br" aria-hidden="true"></div>
+                            <div class="photo-frame">
+                                <img src="assets/user_photo.jpg" alt="Thiệp Lễ Tốt Nghiệp - Nguyễn Kim Thịnh" class="bento-photo-img" width="1024" height="768" decoding="async">
+                            </div>
+                            <div class="bento-photo-overlay">
+                                <span class="photo-badge"><i class="fa-solid fa-graduation-cap"></i> Class of 2026</span>
+                            </div>
+                        </div>
+
+                        <div class="bento-intro card-glass card-glow">
+                            <span class="eyebrow eyebrow-shine"><i class="fa-solid fa-sparkles"></i> Thư mời chính thức</span>
+                            <h1 class="hero-name">Nguyễn Kim <em>Thịnh</em></h1>
+                            <p class="hero-role">Cử Nhân CNTT · Khoá 2022 – 2026</p>
+                            <p class="hero-school">Trường Đại học Thủ Dầu Một</p>
+
+                            <div class="chip-row">
+                                <span class="chip"><i class="fa-regular fa-calendar"></i> Thứ Hai, 22/06/2026</span>
+                                <span class="chip chip-time"><i class="fa-regular fa-clock"></i> 12:30 – 16:30</span>
+                                <span class="chip"><i class="fa-solid fa-location-dot"></i> Hội trường 2</span>
+                            </div>
+
+                            <div class="countdown-wrap">
+                                <p class="countdown-label"><i class="fa-regular fa-hourglass-half"></i> Đếm ngược</p>
+                                <div class="countdown" aria-label="Đếm ngược đến ngày lễ">
+                                    <div class="cd-cell"><b id="days">00</b><small>Ngày</small></div>
+                                    <div class="cd-cell"><b id="hours">00</b><small>Giờ</small></div>
+                                    <div class="cd-cell"><b id="minutes">00</b><small>Phút</small></div>
+                                    <div class="cd-cell"><b id="seconds">00</b><small>Giây</small></div>
+                                </div>
+                            </div>
+
+                            <a href="#rsvp-section" class="btn btn-main">
+                                <i class="fa-solid fa-paper-plane"></i> Xác nhận tham dự
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INVITE -->
+            <section id="invite" class="invite section-reveal">
+                <div class="wrap">
+                    <div class="invite-card card-glass card-shine">
+                        <div class="invite-ornament invite-ornament-tl" aria-hidden="true"></div>
+                        <div class="invite-ornament invite-ornament-tr" aria-hidden="true"></div>
+                        <div class="invite-ornament invite-ornament-bl" aria-hidden="true"></div>
+                        <div class="invite-ornament invite-ornament-br" aria-hidden="true"></div>
+
+                        <header class="invite-header">
+                            <div class="invite-seal"><i class="fa-solid fa-envelope-open-text"></i></div>
+                            <span class="invite-label">Gửi đến</span>
+                        </header>
+
+                        <div class="invite-body">
+                            <h2 id="guest-name" class="invite-name">Bạn Bè &amp; Người Thân</h2>
+                            <div class="invite-divider" aria-hidden="true"><span>✦</span></div>
+                            <blockquote class="invite-quote">
+                                <p>"Chặng đường mới bắt đầu — cảm ơn bạn đã đồng hành cùng Thịnh suốt hành trình học tập."</p>
+                            </blockquote>
+                            <div class="invite-message">
+                                <p class="invite-lead">Trân trọng kính mời</p>
+                                <p class="invite-text">Bạn đến dự <strong>Lễ Tốt Nghiệp</strong> buổi chiều ngày <strong>22/06/2026</strong> (12:30 – 16:30) tại khuôn viên <strong>Hội trường 2</strong>, Trường Đại học Thủ Dầu Một.</p>
+                                <p class="invite-arrival"><i class="fa-regular fa-clock"></i> Thời gian sự kiện: <strong>12:30 – 16:30</strong></p>
+                                <p class="invite-closing">Sự hiện diện của bạn là niềm vinh dự lớn nhất của gia đình cùng Thịnh.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROGRAM -->
+            <section id="program" class="program section-reveal">
+                <div class="wrap">
+                    <div class="section-head">
+                        <span class="section-ornament" aria-hidden="true">✦</span>
+                        <h2>Chương trình</h2>
+                        <p>Lịch trình dự kiến · 22/06/2026</p>
+                    </div>
+                    <div class="program-list program-timeline">
+                        <div class="program-step program-step-main card-glass">
+                            <div class="step-badge">12:30</div>
+                            <div class="step-body">
+                                <h4>Lễ tốt nghiệp chính thức</h4>
+                                <p>Khai mạc buổi lễ tại khuôn viên Hội trường 2</p>
+                            </div>
+                        </div>
+                        <div class="program-step card-glass">
+                            <div class="step-badge">14:00</div>
+                            <div class="step-body">
+                                <h4>Chụp ảnh lưu niệm</h4>
+                                <p>Chụp hình cùng gia đình, bạn bè và thầy cô</p>
+                            </div>
+                        </div>
+                        <div class="program-step card-glass">
+                            <div class="step-badge">16:30</div>
+                            <div class="step-body">
+                                <h4>Kết thúc chương trình</h4>
+                                <p>Cảm ơn bạn đã đến chung vui cùng Thịnh!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAP -->
+            <section id="map" class="venue section-reveal">
+                <div class="wrap">
+                    <div class="venue-card card-glass">
+                        <div class="venue-info">
+                            <span class="eyebrow"><i class="fa-solid fa-map-pin"></i> Địa điểm</span>
+                            <h2>Trường Đại học Thủ Dầu Một</h2>
+                            <p class="venue-hall"><strong>Khuôn viên Hội trường 2</strong></p>
+                            <p>506 Bến Cát, Phú Hòa, Thủ Dầu Một, Bình Dương</p>
+                            <ul class="venue-tips">
+                                <li><i class="fa-regular fa-clock"></i> Thời gian: 12:30 – 16:30 · Thứ Hai, 22/06/2026</li>
+                                <li><i class="fa-solid fa-door-open"></i> Có mặt từ 12:30 – 16:30 là được nhé</li>
+                                <li><i class="fa-solid fa-motorcycle"></i> Giữ xe tại cổng số 4</li>
+                            </ul>
+                            <a href="https://maps.app.goo.gl/ncru3uYSDWNMDbu87" target="_blank" rel="noopener" class="btn btn-ghost">
+                                <i class="fa-solid fa-diamond-turn-right"></i> Chỉ đường
+                            </a>
+                        </div>
+                        <div class="venue-map">
+                            <iframe src="https://maps.google.com/maps?q=10.9807104,106.6752891&amp;hl=vi&amp;z=17&amp;ie=UTF8&amp;iwloc=&amp;output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" title="Bản đồ Trường Đại học Thủ Dầu Một"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RSVP -->
+            <section id="rsvp-section" class="rsvp section-reveal">
+                <div class="wrap">
+                    <div class="section-head">
+                        <span class="section-ornament" aria-hidden="true">✦</span>
+                        <span class="eyebrow eyebrow-shine"><i class="fa-solid fa-pen-fancy"></i> Sổ lưu bút &amp; RSVP</span>
+                        <h2>Gửi lời chúc</h2>
+                        <p>Xác nhận trước ngày 20/06 để Thịnh chuẩn bị chỗ ngồi nhé!</p>
+                    </div>
+
+                    <div class="rsvp-bento card-glass card-shine">
+                        <div class="rsvp-bento-inner">
+                            <div class="rsvp-col rsvp-col-form">
+                                <header class="rsvp-col-head">
+                                    <span class="rsvp-col-icon" aria-hidden="true"><i class="fa-solid fa-paper-plane"></i></span>
+                                    <div>
+                                        <h3>Phản hồi của bạn</h3>
+                                        <p>Điền thông tin bên dưới</p>
+                                    </div>
+                                </header>
+                                <form id="rsvp-form" class="rsvp-form">
+                                    <div class="field field-modern">
+                                        <label for="input-name">Họ và tên</label>
+                                        <div class="input-wrap">
+                                            <i class="fa-regular fa-user input-icon" aria-hidden="true"></i>
+                                            <input type="text" id="input-name" placeholder="Nhập tên của bạn" required autocomplete="name">
+                                        </div>
+                                    </div>
+                                    <div class="field field-modern">
+                                        <label>Tham dự?</label>
+                                        <div class="choice-group choice-pills">
+                                            <label class="choice">
+                                                <input type="radio" name="attendance" value="attending" required>
+                                                <span><i class="fa-solid fa-face-grin-hearts"></i> Sẽ đến</span>
+                                            </label>
+                                            <label class="choice">
+                                                <input type="radio" name="attendance" value="maybe">
+                                                <span><i class="fa-solid fa-face-smile-beam"></i> Có thể</span>
+                                            </label>
+                                            <label class="choice">
+                                                <input type="radio" name="attendance" value="absent">
+                                                <span><i class="fa-solid fa-face-frown-open"></i> Bận rồi</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="field field-modern">
+                                        <label for="input-wish">Lời chúc</label>
+                                        <div class="input-wrap input-wrap-area">
+                                            <i class="fa-regular fa-comment-dots input-icon input-icon-area" aria-hidden="true"></i>
+                                            <textarea id="input-wish" rows="4" placeholder="Viết lời chúc đến Thịnh..."></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="submit" id="rsvp-submit-btn" class="btn btn-main btn-full btn-send">
+                                        <i class="fa-solid fa-paper-plane"></i> Gửi phản hồi
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="rsvp-divider" aria-hidden="true"><span>✦</span></div>
+
+                            <div class="rsvp-col rsvp-col-wishes">
+                                <header class="rsvp-col-head wishes-book-head">
+                                    <span class="rsvp-col-icon wishes-book-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+                                    <div>
+                                        <h3>Sổ lưu bút</h3>
+                                        <p>Lời chúc từ bạn bè &amp; người thân</p>
+                                    </div>
+                                    <span id="wishes-count" class="wishes-badge">0 lời chúc</span>
+                                </header>
+                                <div id="wishes-box" class="wishes-viewport wishes-book">
+                                    <div class="wishes-fade wishes-fade-top" aria-hidden="true"></div>
+                                    <div id="wishes-scroll-inner" class="wishes-scroll-inner">
+                                        <div id="wishes-list" class="wishes-track"></div>
+                                    </div>
+                                    <div class="wishes-fade wishes-fade-bottom" aria-hidden="true"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="site-footer">
+                <div class="wrap">
+                    <p class="footer-name">Nguyễn Kim Thịnh</p>
+                    <p class="footer-tag">Lễ Tốt Nghiệp 2026 · 12:30 – 16:30</p>
+                    <p class="footer-note">Thứ Hai, 22/06/2026 · Khuôn viên Hội trường 2, ĐH Thủ Dầu Một</p>
+                </div>
+            </footer>
+
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js?v=34"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "thiep-moi-tot-nghiep-nguyen-kim-thinh",
+  "version": "1.0.0",
+  "description": "Graduation invitation website for Nguyen Kim Thinh",
+  "main": "index.html",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
