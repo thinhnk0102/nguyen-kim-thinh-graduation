@@ -226,9 +226,6 @@ body {
   mask-composite: exclude;
   pointer-events: none;
 }
-.wishes-scroll-inner.wishes-scroll-active {
-  animation: wishes-scroll-up var(--scroll-duration, 24s) linear infinite;
-}
 .eyebrow {
   display: inline-flex;
   align-items: center;
