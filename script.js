@@ -302,36 +302,61 @@ const WISHES_API = `${API_BASE}/api/wishes`;
         return card;
     }
 
-    function setupWishAutoScroll() {
-        if (!wishesScrollInner || !wishesViewport) return;
+    let autoScrollInterval;
+let autoScrollResumeTimer;
+let isUserInteracting = false;
 
-        wishesScrollInner.classList.remove("wishes-scroll-active");
-        wishesScrollInner.style.removeProperty("--scroll-duration");
-        wishesScrollInner.querySelector(".wishes-track-clone")?.remove();
+function setupWishAutoScroll() {
+    if (!wishesViewport) return;
 
-        const cards = wishesList?.querySelectorAll(".wish-card-premium");
-        if (!cards || cards.length < 2) return;
+    clearInterval(autoScrollInterval);
 
-        const cloneTrack = document.createElement("div");
-        cloneTrack.className = "wishes-track wishes-track-clone";
-        cloneTrack.setAttribute("aria-hidden", "true");
-        cards.forEach(card => cloneTrack.appendChild(card.cloneNode(true)));
-        wishesScrollInner.appendChild(cloneTrack);
+    function startAutoScroll() {
+        clearInterval(autoScrollInterval);
 
-        requestAnimationFrame(() => {
-            const scrollHeight = wishesScrollInner.scrollHeight;
-            const halfHeight = scrollHeight / 2;
-            if (halfHeight <= wishesViewport.clientHeight + 8) {
-                wishesViewport.classList.add("is-static");
-                return;
+        autoScrollInterval = setInterval(() => {
+            if (isUserInteracting) return;
+
+            const maxScroll =
+                wishesViewport.scrollHeight -
+                wishesViewport.clientHeight;
+
+            if (maxScroll <= 0) return;
+
+            if (wishesViewport.scrollTop >= maxScroll) {
+                wishesViewport.scrollTop = 0;
+            } else {
+                wishesViewport.scrollTop += 1;
             }
-
-            wishesViewport.classList.remove("is-static");
-            const duration = Math.min(48, Math.max(16, halfHeight / 18));
-            wishesScrollInner.style.setProperty("--scroll-duration", `${duration}s`);
-            wishesScrollInner.classList.add("wishes-scroll-active");
-        });
+        }, 40);
     }
+
+    function pauseAutoScroll() {
+        isUserInteracting = true;
+
+        clearTimeout(autoScrollResumeTimer);
+
+        autoScrollResumeTimer = setTimeout(() => {
+            isUserInteracting = false;
+        }, 3000);
+    }
+
+    wishesViewport.removeEventListener("wheel", pauseAutoScroll);
+    wishesViewport.removeEventListener("touchmove", pauseAutoScroll);
+    wishesViewport.removeEventListener("mousedown", pauseAutoScroll);
+
+    wishesViewport.addEventListener("wheel", pauseAutoScroll, {
+        passive: true,
+    });
+
+    wishesViewport.addEventListener("touchmove", pauseAutoScroll, {
+        passive: true,
+    });
+
+    wishesViewport.addEventListener("mousedown", pauseAutoScroll);
+
+    startAutoScroll();
+}
 
     async function loadWishes() {
         try {
