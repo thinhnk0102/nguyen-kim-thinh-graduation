@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
   location.hostname === "127.0.0.1" ||
   location.hostname === "localhost"
     ? "http://127.0.0.1:3000"
-    : "https://TEN-URL-RENDER-CUA-BAN.onrender.com";
+    : "https://nguyen-kim-thinh-graduation.onrender.com";
 
 const WISHES_API = `${API_BASE}/api/wishes`;
 
