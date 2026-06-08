@@ -258,8 +258,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const wishesCount = document.getElementById("wishes-count");
     const wishesScrollInner = document.getElementById("wishes-scroll-inner");
     const wishesViewport = document.getElementById("wishes-box");
-    const API_BASE = location.hostname === "127.0.0.1" || location.hostname === "localhost" ? "http://127.0.0.1:3000" : "";
-    const WISHES_API = `${API_BASE}/api/wishes`;
+    const API_BASE =
+  location.hostname === "127.0.0.1" ||
+  location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"
+    : "https://TEN-URL-RENDER-CUA-BAN.onrender.com";
+
+const WISHES_API = `${API_BASE}/api/wishes`;
 
     const wishStatusMap = {
         attending: { label: "Tham dự", cls: "attending" },
