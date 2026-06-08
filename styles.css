@@ -1786,10 +1786,6 @@ h1, h2, h3, h4 {
   will-change: transform;
 }
 
-.wishes-scroll-inner.wishes-scroll-active {
-  animation: wishes-scroll-up var(--scroll-duration, 24s) linear infinite;
-}
-
 .wishes-scroll-inner.wishes-scroll-active:hover {
   animation-play-state: paused;
 }
