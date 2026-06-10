@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin.css?v=6">
+    <link rel="stylesheet" href="admin.css?v=11">
 </head>
 <body>
 
@@ -73,11 +73,24 @@
                     <span class="stat-num" id="stat-absent">0</span>
                     <span class="stat-label">Bận việc</span>
                 </div>
+                <div class="stat-box stat-box-wide">
+                    <span class="stat-num" id="stat-replied">0</span>
+                    <span class="stat-label">Đã trả lời</span>
+                </div>
             </div>
 
             <div class="toolbar">
                 <button id="refresh-btn" class="btn btn-outline">
                     <i class="fa-solid fa-rotate"></i> Tải lại
+                </button>
+                <button id="restore-backup-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Khôi phục backup
+                </button>
+                <button id="import-browser-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-download"></i> Nhập từ trình duyệt
+                </button>
+                <button id="export-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-file-export"></i> Xuất JSON
                 </button>
                 <button id="clear-all-btn" class="btn btn-danger">
                     <i class="fa-solid fa-trash-can"></i> Xóa tất cả
@@ -88,6 +101,6 @@
         </section>
     </div>
 
-    <script src="admin.js?v=2"></script>
+    <script src="admin.js?v=9"></script>
 </body>
 </html>
