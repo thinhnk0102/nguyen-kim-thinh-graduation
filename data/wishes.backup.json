@@ -41,6 +41,14 @@
     "reactionAt": "2026-06-10T15:45:45.722Z",
     "reply": "sao z",
     "replyAt": "2026-06-10T15:46:08.065Z",
-    "replyComments": []
+    "replyComments": [
+      {
+        "id": "rc-1781106685407-0v1scu",
+        "name": "Ẩn danh",
+        "anonymous": true,
+        "text": "test an danh",
+        "createdAt": "2026-06-10T15:51:25.407Z"
+      }
+    ]
   }
 ]
