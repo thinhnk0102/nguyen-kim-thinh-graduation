@@ -289,6 +289,18 @@ const WISHES_API = `${API_BASE}/api/wishes`;
         absent: { label: "Không", cls: "absent" }
     };
 
+    const REACTIONS = {
+        love: { emoji: "❤️", cls: "react-love" },
+        haha: { emoji: "😂", cls: "react-haha" },
+        moved: { emoji: "🥹", cls: "react-moved" }
+    };
+
+    function getWishReaction(item) {
+        if (item?.reaction && REACTIONS[item.reaction]) return item.reaction;
+        if (item?.liked) return "love";
+        return null;
+    }
+
     function escapeHtml(str) {
         return String(str)
             .replace(/&/g, "&amp;")
@@ -297,23 +309,179 @@ const WISHES_API = `${API_BASE}/api/wishes`;
             .replace(/"/g, "&quot;");
     }
 
+    function sortWishesForDisplay(list) {
+        return [...list].sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+    }
+
+    function formatWishTime(dateStr) {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return "";
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return "Vừa xong";
+        if (diffMin < 60) return `${diffMin} phút`;
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24) return `${diffHour} giờ`;
+        const diffDay = Math.floor(diffHour / 24);
+        if (diffDay < 7) return `${diffDay} ngày`;
+        return d.toLocaleDateString("vi-VN");
+    }
+
+    const REPLY_NAME_KEY = "wish_reply_display_name";
+    const REPLY_ANONYMOUS_KEY = "wish_reply_anonymous";
+
+    function getThreadCommentDisplay(comment) {
+        const isAnonymous = Boolean(comment.anonymous) || comment.name === "Ẩn danh";
+        const label = isAnonymous ? "Ẩn danh" : (comment.name || "Ẩn danh");
+        const initial = isAnonymous ? "?" : label.trim().charAt(0).toUpperCase();
+        return { isAnonymous, label, initial };
+    }
+
+    function buildThreadReplyItem(comment) {
+        const display = getThreadCommentDisplay(comment);
+        const time = formatWishTime(comment.createdAt);
+        return `
+            <div class="wish-fb-comment wish-fb-comment-nested">
+                <span class="wish-fb-comment-avatar${display.isAnonymous ? " is-anonymous" : ""}" aria-hidden="true">${escapeHtml(display.initial)}</span>
+                <div class="wish-fb-comment-body">
+                    <div class="wish-fb-comment-bubble">
+                        <strong class="wish-fb-comment-author${display.isAnonymous ? " is-anonymous" : ""}">${escapeHtml(display.label)}</strong>
+                        <span class="wish-fb-comment-text">${escapeHtml(comment.text)}</span>
+                    </div>
+                    ${time ? `<time class="wish-fb-comment-time">${escapeHtml(time)}</time>` : ""}
+                </div>
+            </div>`;
+    }
+
+    function updateReplyIdentityUI(form) {
+        if (!form) return;
+        const isAnonymous = form.querySelector('input[name="identity"][value="anonymous"]')?.checked;
+        const nameWrap = form.querySelector(".wish-fb-reply-name-wrap");
+        const nameInput = form.querySelector(".wish-fb-reply-name");
+
+        if (isAnonymous) {
+            nameWrap?.classList.add("is-hidden");
+            nameInput?.removeAttribute("required");
+            if (nameInput) nameInput.disabled = true;
+        } else {
+            nameWrap?.classList.remove("is-hidden");
+            nameInput?.setAttribute("required", "");
+            if (nameInput) {
+                nameInput.disabled = false;
+                const savedName = localStorage.getItem(REPLY_NAME_KEY);
+                if (savedName && !nameInput.value) nameInput.value = savedName;
+            }
+        }
+    }
+
+    function initReplyIdentityForm(form) {
+        if (!form) return;
+        const preferAnonymous = localStorage.getItem(REPLY_ANONYMOUS_KEY) === "1";
+        const namedRadio = form.querySelector('input[name="identity"][value="named"]');
+        const anonRadio = form.querySelector('input[name="identity"][value="anonymous"]');
+        if (preferAnonymous && anonRadio) anonRadio.checked = true;
+        else if (namedRadio) namedRadio.checked = true;
+        updateReplyIdentityUI(form);
+    }
+
+    function buildHostResponseBlock(item) {
+        const reactionKey = getWishReaction(item);
+        const hasReply = Boolean(String(item.reply || "").trim());
+        if (!reactionKey && !hasReply) return "";
+
+        let html = '<div class="wish-fb-engage" role="note" aria-label="Phản hồi từ Thịnh">';
+
+        if (reactionKey) {
+            const reaction = REACTIONS[reactionKey];
+            html += `
+                <div class="wish-fb-reactions">
+                    <span class="wish-fb-reaction-stack" aria-hidden="true">
+                        <span class="wish-fb-reaction-icon ${reaction.cls}">${reaction.emoji}</span>
+                    </span>
+                    <span class="wish-fb-reaction-who">Thịnh</span>
+                </div>`;
+        }
+
+        if (hasReply) {
+            const replyTime = formatWishTime(item.replyAt);
+            const threadComments = Array.isArray(item.replyComments) ? item.replyComments : [];
+            const nestedHtml = threadComments.map(buildThreadReplyItem).join("");
+
+            html += `
+                <div class="wish-fb-comments">
+                    <div class="wish-fb-comment is-host">
+                        <span class="wish-fb-comment-avatar" aria-hidden="true">T</span>
+                        <div class="wish-fb-comment-body">
+                            <div class="wish-fb-comment-bubble">
+                                <strong class="wish-fb-comment-author">Nguyễn Kim Thịnh</strong>
+                                <span class="wish-fb-comment-text">${escapeHtml(item.reply)}</span>
+                            </div>
+                            <div class="wish-fb-comment-meta">
+                                ${replyTime ? `<time class="wish-fb-comment-time">${escapeHtml(replyTime)}</time>` : ""}
+                                <button type="button" class="wish-fb-reply-toggle" data-action="toggle-thread-reply">Trả lời</button>
+                            </div>
+                        </div>
+                    </div>
+                    ${nestedHtml ? `<div class="wish-fb-thread-replies">${nestedHtml}</div>` : ""}
+                    <form class="wish-fb-reply-form" hidden>
+                        <div class="wish-fb-reply-identity" role="radiogroup" aria-label="Chọn hiển thị tên">
+                            <label class="wish-fb-identity-option">
+                                <input type="radio" name="identity" value="named" checked>
+                                <span>Ghi tên</span>
+                            </label>
+                            <label class="wish-fb-identity-option">
+                                <input type="radio" name="identity" value="anonymous">
+                                <span>Ẩn danh</span>
+                            </label>
+                        </div>
+                        <div class="wish-fb-reply-form-row">
+                            <div class="wish-fb-reply-name-wrap">
+                                <input type="text" class="wish-fb-reply-name" name="name" maxlength="50" placeholder="Tên của bạn" required autocomplete="name">
+                            </div>
+                            <textarea class="wish-fb-reply-input" name="text" rows="2" maxlength="300" placeholder="Trả lời Thịnh..." required></textarea>
+                        </div>
+                        <div class="wish-fb-reply-actions">
+                            <button type="submit" class="wish-fb-reply-submit">Gửi</button>
+                            <button type="button" class="wish-fb-reply-cancel" data-action="cancel-thread-reply">Hủy</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        html += "</div>";
+        return html;
+    }
+
     function createWishCard(item) {
         const card = document.createElement("article");
-        card.className = "wish-card-premium";
+        const hasHostResponse = Boolean(getWishReaction(item)) || Boolean(String(item.reply || "").trim());
+        card.className = `wish-card-premium${item.pinned ? " is-pinned" : ""}${hasHostResponse ? " has-host-response" : ""}`;
+        card.dataset.wishId = item.id;
         const initial = (item.name || "?").trim().charAt(0).toUpperCase();
         const status = wishStatusMap[item.attendance] || wishStatusMap.maybe;
         const wishText = item.wish || "Đã gửi lời chúc tới Thịnh.";
         const dateStr = new Date(item.createdAt).toLocaleDateString("vi-VN");
+        const hostResponseBlock = buildHostResponseBlock(item);
 
         card.innerHTML = `
             <div class="wish-avatar" aria-hidden="true">${escapeHtml(initial)}</div>
             <div class="wish-body">
                 <div class="wish-header">
                     <strong>${escapeHtml(item.name)}</strong>
-                    <span class="wish-tag ${status.cls}">${status.label}</span>
+                    <div class="wish-header-tags">
+                        ${item.pinned ? '<span class="wish-pin-tag" title="Thịnh đã ghim"><i class="fa-solid fa-thumbtack"></i></span>' : ""}
+                        <span class="wish-tag ${status.cls}">${status.label}</span>
+                    </div>
                 </div>
-                <p>${escapeHtml(wishText)}</p>
-                <small>${escapeHtml(dateStr)}</small>
+                <p class="wish-message">${escapeHtml(wishText)}</p>
+                ${hostResponseBlock}
+                <small class="wish-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i> ${escapeHtml(dateStr)}</small>
             </div>
         `;
         return card;
@@ -379,14 +547,14 @@ const WISHES_API = `${API_BASE}/api/wishes`;
 
     async function loadWishes() {
         try {
-            const res = await fetch(WISHES_API);
+            const res = await fetch(`${WISHES_API}?t=${Date.now()}`, { cache: "no-store" });
             const data = await res.json();
             if (data.success) {
                 renderWishes(data.wishes);
+                localStorage.setItem("graduation_wishes_backup", JSON.stringify(data.wishes));
             }
         } catch (err) {
             console.warn("Could not load wishes from server:", err);
-            // Fallback to local storage if needed
             const cached = localStorage.getItem("graduation_wishes_backup");
             if (cached) renderWishes(JSON.parse(cached));
         }
@@ -411,11 +579,109 @@ const WISHES_API = `${API_BASE}/api/wishes`;
             return;
         }
 
-        wishes.slice().reverse().forEach(item => {
+        sortWishesForDisplay(wishes).forEach(item => {
             wishesList.appendChild(createWishCard(item));
         });
 
         setupWishAutoScroll();
+        bindWishThreadEvents();
+    }
+
+    let wishThreadEventsBound = false;
+
+    function bindWishThreadEvents() {
+        if (!wishesList || wishThreadEventsBound) return;
+        wishThreadEventsBound = true;
+
+        wishesList.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-action]");
+            if (!btn) return;
+
+            const card = btn.closest(".wish-card-premium");
+            if (!card) return;
+
+            const form = card.querySelector(".wish-fb-reply-form");
+            if (!form) return;
+
+            if (btn.dataset.action === "toggle-thread-reply") {
+                e.preventDefault();
+                const willOpen = form.hidden;
+                wishesList.querySelectorAll(".wish-fb-reply-form").forEach((f) => { f.hidden = true; });
+                if (willOpen) {
+                    form.hidden = false;
+                    initReplyIdentityForm(form);
+                    form.querySelector(".wish-fb-reply-input")?.focus();
+                }
+                pauseWishAutoScroll();
+                return;
+            }
+
+            if (btn.dataset.action === "cancel-thread-reply") {
+                e.preventDefault();
+                form.hidden = true;
+                form.reset();
+                initReplyIdentityForm(form);
+            }
+        });
+
+        wishesList.addEventListener("change", (e) => {
+            if (e.target.name !== "identity") return;
+            const form = e.target.closest(".wish-fb-reply-form");
+            updateReplyIdentityUI(form);
+            pauseWishAutoScroll();
+        });
+
+        wishesList.addEventListener("submit", async (e) => {
+            const form = e.target.closest(".wish-fb-reply-form");
+            if (!form) return;
+            e.preventDefault();
+
+            const card = form.closest(".wish-card-premium");
+            const wishId = card?.dataset.wishId;
+            if (!wishId) return;
+
+            const nameInput = form.querySelector(".wish-fb-reply-name");
+            const textInput = form.querySelector(".wish-fb-reply-input");
+            const isAnonymous = form.querySelector('input[name="identity"][value="anonymous"]')?.checked;
+            const name = isAnonymous ? "" : (nameInput?.value.trim() || "");
+            const text = textInput?.value.trim() || "";
+
+            if (!text) {
+                alert("Vui lòng nhập nội dung trả lời.");
+                return;
+            }
+
+            if (!isAnonymous && !name) {
+                alert("Vui lòng nhập tên hoặc chọn ẩn danh.");
+                return;
+            }
+
+            const submitBtn = form.querySelector(".wish-fb-reply-submit");
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${WISHES_API}/${encodeURIComponent(wishId)}/replies`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, text, anonymous: Boolean(isAnonymous) }),
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.message || "Không gửi được trả lời.");
+                    return;
+                }
+
+                localStorage.setItem(REPLY_ANONYMOUS_KEY, isAnonymous ? "1" : "0");
+                if (!isAnonymous && name) localStorage.setItem(REPLY_NAME_KEY, name);
+                renderWishes(data.wishes);
+                pauseWishAutoScroll();
+            } catch (err) {
+                console.error("Thread reply error:", err);
+                alert("Đã có lỗi. Vui lòng thử lại!");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
     }
 
     rsvpForm?.addEventListener("submit", async (e) => {
