@@ -1,0 +1,46 @@
+[
+  {
+    "id": "wish-001",
+    "name": "Bạn cấp 3",
+    "attendance": "attending",
+    "wish": "Cuối cùng cũng đến ngày tốt nghiệp rồi nha. Chúc mừng Thịnh đã hoàn thành chặng đường 4,5 năm đại học đầy nỗ lực. Chúc bạn sớm tìm được công việc yêu thích, gặt hái nhiều thành công và luôn giữ được nhiệt huyết như những ngày đầu.",
+    "createdAt": "2026-06-05T16:04:55.222Z",
+    "reaction": "love",
+    "reactionAt": "2026-06-10T15:45:39.783Z"
+  },
+  {
+    "id": "wish-002",
+    "name": "Người luôn thầm yêu anh",
+    "attendance": "maybe",
+    "wish": "Chúc anh sắp bước đến ngày tốt nghiệp thật rạng rỡ và đáng nhớ. Dù em chỉ là người thầm thương trộm nhớ, âm thầm dõi theo từ xa, nhưng vẫn muốn gửi anh một lời chúc trước: mong anh luôn thành công, hạnh phúc và đẹp trai nhất trong ngày đặc biệt sắp tới.",
+    "createdAt": "2026-06-10T09:15:00.000Z",
+    "pinned": true,
+    "reaction": "moved",
+    "reactionAt": "2026-06-10T15:43:57.464Z",
+    "reply": "cảm động sắp khóc",
+    "replyAt": "2026-06-10T15:44:43.463Z"
+  },
+  {
+    "id": "wish-003",
+    "name": "Em nè người từng iu",
+    "attendance": "absent",
+    "wish": "Chúc mừng anh đã tốt nghiệp đại học nhé 🎓🤍\n\nSau những năm tháng cố gắng, những lần áp lực vì bài vở, thi cử và cả những lúc mệt mỏi, cuối cùng anh cũng đã chạm đến cột mốc mà mình mong muốn. Đây là thành quả hoàn toàn xứng đáng với những gì anh đã nỗ lực suốt thời gian qua.\n\nEm thật sự vui khi thấy anh trưởng thành hơn và từng bước đạt được những mục tiêu của mình. Mong rằng chặng đường phía trước sẽ luôn rộng mở, mang đến cho anh thật nhiều cơ hội, thành công và hạnh phúc.\n\nDù mỗi người đang đi trên một con đường riêng, em vẫn luôn mong những điều tốt đẹp nhất sẽ đến với anh. Chúc anh luôn bình an, may mắn và đạt được tất cả những ước mơ còn đang dang dở.\n\nChúc mừng anh, chàng trai đã hoàn thành một cột mốc rất đẹp của tuổi trẻ. 🤍",
+    "createdAt": "2026-06-10T10:30:00.000Z",
+    "reaction": "haha",
+    "reactionAt": "2026-06-10T15:45:23.620Z",
+    "reply": "ông cố nào z :)))",
+    "replyAt": "2026-06-10T15:45:35.261Z"
+  },
+  {
+    "id": "wish-004",
+    "name": "Trực",
+    "attendance": "absent",
+    "wish": "Đã gửi lời chúc tới Thịnh.",
+    "createdAt": "2026-06-10T11:45:00.000Z",
+    "reaction": "haha",
+    "reactionAt": "2026-06-10T15:45:45.722Z",
+    "reply": "sao z",
+    "replyAt": "2026-06-10T15:46:08.065Z",
+    "replyComments": []
+  }
+]

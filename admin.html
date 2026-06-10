@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Lưu Bút - Nguyễn Kim Thịnh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css?v=11">
+</head>
+<body>
+
+    <div id="server-banner" class="server-banner" hidden></div>
+
+    <div class="admin-wrap">
+        <!-- Đăng nhập -->
+        <section id="login-section" class="admin-card">
+            <div class="admin-logo">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h1 class="admin-title">Quản Trị Lưu Bút</h1>
+            <p class="admin-subtitle">Chỉ chủ nhân thiệp mời mới có thể đăng nhập</p>
+
+            <form id="login-form" class="admin-form">
+                <div class="form-group">
+                    <label for="admin-user">Tên đăng nhập</label>
+                    <input type="text" id="admin-user" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-pass">Mật khẩu</label>
+                    <input type="password" id="admin-pass" autocomplete="current-password" required>
+                </div>
+                <p id="login-error" class="error-msg" hidden></p>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+                </button>
+            </form>
+
+            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Về thiệp mời</a>
+        </section>
+
+        <!-- Bảng quản lý -->
+        <section id="panel-section" class="admin-card admin-panel" hidden>
+            <div class="panel-header">
+                <div>
+                    <h1 class="admin-title">Hộp Lưu Bút</h1>
+                    <p class="admin-subtitle">Lưu trong file <code>data/wishes.json</code></p>
+                </div>
+                <div class="panel-actions">
+                    <span id="admin-user-label" class="user-badge"></span>
+                    <button id="logout-btn" class="btn btn-outline">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span class="stat-num" id="stat-total">0</span>
+                    <span class="stat-label">Tổng lời chúc</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="stat-attending">0</span>
+                    <span class="stat-label">Sẽ tham dự</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="stat-maybe">0</span>
+                    <span class="stat-label">Có thể đến</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="stat-absent">0</span>
+                    <span class="stat-label">Bận việc</span>
+                </div>
+                <div class="stat-box stat-box-wide">
+                    <span class="stat-num" id="stat-replied">0</span>
+                    <span class="stat-label">Đã trả lời</span>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <button id="refresh-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-rotate"></i> Tải lại
+                </button>
+                <button id="restore-backup-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Khôi phục backup
+                </button>
+                <button id="import-browser-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-download"></i> Nhập từ trình duyệt
+                </button>
+                <button id="export-btn" class="btn btn-outline">
+                    <i class="fa-solid fa-file-export"></i> Xuất JSON
+                </button>
+                <button id="clear-all-btn" class="btn btn-danger">
+                    <i class="fa-solid fa-trash-can"></i> Xóa tất cả
+                </button>
+            </div>
+
+            <div id="wishes-admin-list" class="wishes-admin-list"></div>
+        </section>
+    </div>
+
+    <script src="admin.js?v=9"></script>
+</body>
+</html>
