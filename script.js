@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const isNarrowScreen = window.matchMedia("(max-width: 599px)").matches;
+    const lowPowerMode = prefersReducedMotion || isCoarsePointer || isNarrowScreen;
+
     // ==========================================================================
     // 1. LOADER & REVEAL ANIMATIONS
     // ==========================================================================
@@ -90,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     let navAutoScrollId = null;
+    let navAutoPauseTimer = null;
     let navAutoPaused = false;
 
     function stopNavAutoScroll() {
@@ -97,48 +103,58 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelAnimationFrame(navAutoScrollId);
             navAutoScrollId = null;
         }
+        if (navAutoPauseTimer) {
+            clearTimeout(navAutoPauseTimer);
+            navAutoPauseTimer = null;
+        }
         navWrap?.classList.remove("is-auto-scrolling");
     }
 
     function startNavAutoScroll() {
         stopNavAutoScroll();
-        if (navAutoPaused || window.innerWidth >= 600) return;
+        if (lowPowerMode || navAutoPaused || window.innerWidth >= 600) return;
         if (!navEl || navEl.scrollWidth <= navEl.clientWidth + 4) return;
 
         const maxScroll = navEl.scrollWidth - navEl.clientWidth;
-        const speed = 0.55;
-        let phase = "wait-start";
+        const speed = 0.45;
+        let scrolling = false;
 
         navEl.scrollLeft = maxScroll;
         updateNavScrollState();
         navWrap?.classList.add("is-auto-scrolling");
 
         function tick() {
-            if (navAutoPaused || window.innerWidth >= 600) {
+            if (navAutoPaused || window.innerWidth >= 600 || document.hidden) {
                 stopNavAutoScroll();
                 return;
             }
 
-            if (phase === "scroll-left") {
-                navEl.scrollLeft = Math.max(0, navEl.scrollLeft - speed);
-                updateNavScrollState();
-                if (navEl.scrollLeft <= 0) {
-                    navEl.scrollLeft = 0;
-                    phase = "pause-end";
-                    window.setTimeout(() => {
-                        navEl.scrollLeft = maxScroll;
-                        updateNavScrollState();
-                        phase = "pause-start";
-                        window.setTimeout(() => { phase = "scroll-left"; }, 1200);
-                    }, 1800);
-                }
+            if (!scrolling) return;
+
+            navEl.scrollLeft = Math.max(0, navEl.scrollLeft - speed);
+            updateNavScrollState();
+
+            if (navEl.scrollLeft <= 0) {
+                navEl.scrollLeft = 0;
+                scrolling = false;
+                navAutoScrollId = null;
+                navAutoPauseTimer = window.setTimeout(() => {
+                    navEl.scrollLeft = maxScroll;
+                    updateNavScrollState();
+                    navAutoPauseTimer = window.setTimeout(() => {
+                        scrolling = true;
+                        navAutoScrollId = requestAnimationFrame(tick);
+                    }, 1200);
+                }, 1800);
+                return;
             }
 
             navAutoScrollId = requestAnimationFrame(tick);
         }
 
-        window.setTimeout(() => {
-            phase = "scroll-left";
+        navAutoPauseTimer = window.setTimeout(() => {
+            navAutoPauseTimer = null;
+            scrolling = true;
             navAutoScrollId = requestAnimationFrame(tick);
         }, 800);
     }
@@ -191,6 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
         invitationOpened = true;
         await playMusic();
         triggerConfetti();
+        startAmbientConfetti();
         startContinuousConfetti();
         window.setTimeout(() => {
             updateNavScrollState();
@@ -303,60 +320,62 @@ const WISHES_API = `${API_BASE}/api/wishes`;
     }
 
     let autoScrollInterval;
-let autoScrollResumeTimer;
-let isUserInteracting = false;
+    let autoScrollResumeTimer;
+    let isUserInteracting = false;
+    let wishesSectionVisible = true;
 
-function setupWishAutoScroll() {
-    if (!wishesViewport) return;
-
-    clearInterval(autoScrollInterval);
-
-    function startAutoScroll() {
+    function stopWishAutoScroll() {
         clearInterval(autoScrollInterval);
-
-        autoScrollInterval = setInterval(() => {
-            if (isUserInteracting) return;
-
-            const maxScroll =
-                wishesViewport.scrollHeight -
-                wishesViewport.clientHeight;
-
-            if (maxScroll <= 0) return;
-
-            if (wishesViewport.scrollTop >= maxScroll) {
-                wishesViewport.scrollTop = 0;
-            } else {
-                wishesViewport.scrollTop += 1;
-            }
-        }, 40);
+        autoScrollInterval = null;
     }
 
-    function pauseAutoScroll() {
+    function pauseWishAutoScroll() {
         isUserInteracting = true;
-
         clearTimeout(autoScrollResumeTimer);
-
-        autoScrollResumeTimer = setTimeout(() => {
+        autoScrollResumeTimer = window.setTimeout(() => {
             isUserInteracting = false;
         }, 3000);
     }
 
-    wishesViewport.removeEventListener("wheel", pauseAutoScroll);
-    wishesViewport.removeEventListener("touchmove", pauseAutoScroll);
-    wishesViewport.removeEventListener("mousedown", pauseAutoScroll);
+    function tickWishScroll() {
+        if (!wishesViewport || isUserInteracting || document.hidden || !wishesSectionVisible) return;
 
-    wishesViewport.addEventListener("wheel", pauseAutoScroll, {
-        passive: true,
-    });
+        const maxScroll = wishesViewport.scrollHeight - wishesViewport.clientHeight;
+        if (maxScroll <= 0) return;
 
-    wishesViewport.addEventListener("touchmove", pauseAutoScroll, {
-        passive: true,
-    });
+        if (wishesViewport.scrollTop >= maxScroll) {
+            wishesViewport.scrollTop = 0;
+        } else {
+            wishesViewport.scrollTop += 1;
+        }
+    }
 
-    wishesViewport.addEventListener("mousedown", pauseAutoScroll);
+    let wishListenersBound = false;
 
-    startAutoScroll();
-}
+    function setupWishAutoScroll() {
+        if (!wishesViewport) return;
+
+        stopWishAutoScroll();
+
+        if (lowPowerMode) return;
+
+        if (!wishListenersBound) {
+            wishesViewport.addEventListener("wheel", pauseWishAutoScroll, { passive: true });
+            wishesViewport.addEventListener("touchmove", pauseWishAutoScroll, { passive: true });
+            wishesViewport.addEventListener("mousedown", pauseWishAutoScroll);
+            wishListenersBound = true;
+        }
+
+        autoScrollInterval = window.setInterval(tickWishScroll, 90);
+    }
+
+    const wishesSection = document.getElementById("rsvp-section");
+    if (wishesSection && !lowPowerMode) {
+        const wishesVisibilityObserver = new IntersectionObserver((entries) => {
+            wishesSectionVisible = entries.some(entry => entry.isIntersecting);
+        }, { threshold: 0.05 });
+        wishesVisibilityObserver.observe(wishesSection);
+    }
 
     async function loadWishes() {
         try {
@@ -382,6 +401,7 @@ function setupWishAutoScroll() {
         wishesCount.textContent = `${wishes.length} lời chúc`;
 
         if (!wishes.length) {
+            stopWishAutoScroll();
             wishesList.innerHTML = `
                 <div class="wishes-empty">
                     <span class="wishes-empty-icon" aria-hidden="true"><i class="fa-regular fa-heart"></i></span>
@@ -437,44 +457,66 @@ function setupWishAutoScroll() {
     // 5. EFFECTS: CONFETTI & SPARKLES
     // ==========================================================================
     const confettiColors = ["#22d3ee", "#3b82f6", "#6366f1", "#f8fafc", "#ffffff"];
+    const ambientConfettiEl = document.getElementById("ambientConfetti");
     let confettiTimer = null;
     let invitationOpened = false;
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let ambientConfettiReady = false;
 
     function shootSideConfetti() {
-        if (typeof confetti !== "function") return;
+        if (typeof confetti !== "function" || prefersReducedMotion || document.hidden) return;
 
-        confetti({
-            particleCount: 4,
-            angle: 72,
-            spread: 58,
-            startVelocity: 38,
-            gravity: 1.1,
-            drift: 0.4,
-            ticks: 220,
-            origin: { x: 0, y: 0.15 },
+        const count = isNarrowScreen ? 1 : 3;
+        const shared = {
+            particleCount: count,
+            spread: 52,
+            startVelocity: 26,
+            gravity: 1,
+            ticks: 120,
+            scalar: 0.85,
             colors: confettiColors,
-            disableForReducedMotion: true
-        });
+            disableForReducedMotion: true,
+            zIndex: 9999
+        };
 
-        confetti({
-            particleCount: 4,
-            angle: 108,
-            spread: 58,
-            startVelocity: 38,
-            gravity: 1.1,
-            drift: -0.4,
-            ticks: 220,
-            origin: { x: 1, y: 0.15 },
-            colors: confettiColors,
-            disableForReducedMotion: true
-        });
+        confetti({ ...shared, angle: 72, drift: 0.3, origin: { x: 0, y: 0.12 } });
+        confetti({ ...shared, angle: 108, drift: -0.3, origin: { x: 1, y: 0.12 } });
     }
 
-    function startContinuousConfetti() {
-        if (prefersReducedMotion || confettiTimer) return;
-        shootSideConfetti();
-        confettiTimer = setInterval(shootSideConfetti, 420);
+    function initAmbientConfetti() {
+        if (!ambientConfettiEl || ambientConfettiReady || prefersReducedMotion) return;
+
+        const pieceCount = isNarrowScreen ? 10 : 16;
+        const palette = ["#22d3ee", "#3b82f6", "#6366f1", "#67e8f9", "#a5b4fc", "#f8fafc"];
+
+        for (let i = 0; i < pieceCount; i += 1) {
+            const piece = document.createElement("span");
+            piece.className = "confetti-piece";
+            const w = 5 + Math.random() * 4;
+            const h = 5 + Math.random() * 5;
+            piece.style.left = `${Math.random() * 100}%`;
+            piece.style.width = `${w}px`;
+            piece.style.height = `${h}px`;
+            piece.style.background = palette[i % palette.length];
+            piece.style.animationDuration = `${10 + Math.random() * 8}s`;
+            piece.style.animationDelay = `${-Math.random() * 14}s`;
+            piece.style.setProperty("--drift", `${(Math.random() - 0.5) * 80}px`);
+            piece.style.setProperty("--spin", `${360 + Math.random() * 540}deg`);
+            if (Math.random() > 0.5) piece.style.borderRadius = "50%";
+            ambientConfettiEl.appendChild(piece);
+        }
+
+        ambientConfettiReady = true;
+    }
+
+    function startAmbientConfetti() {
+        if (prefersReducedMotion || !ambientConfettiEl) return;
+        initAmbientConfetti();
+        ambientConfettiEl.classList.remove("is-paused");
+        ambientConfettiEl.classList.add("is-active");
+    }
+
+    function pauseAmbientConfetti() {
+        ambientConfettiEl?.classList.add("is-paused");
     }
 
     function stopContinuousConfetti() {
@@ -484,80 +526,119 @@ function setupWishAutoScroll() {
         }
     }
 
+    function startContinuousConfetti() {
+        stopContinuousConfetti();
+        if (prefersReducedMotion || !invitationOpened) return;
+
+        const intervalMs = isNarrowScreen ? 2800 : 1600;
+        shootSideConfetti();
+        confettiTimer = window.setInterval(() => {
+            if (!document.hidden && invitationOpened) shootSideConfetti();
+        }, intervalMs);
+    }
+
     function triggerConfetti() {
-        if (typeof confetti !== "function") return;
+        if (typeof confetti !== "function" || prefersReducedMotion) return;
 
         confetti({
-            particleCount: 80,
+            particleCount: isNarrowScreen ? 50 : 80,
             spread: 80,
-            startVelocity: 42,
+            startVelocity: 38,
+            ticks: 140,
             origin: { y: 0.55 },
             colors: confettiColors,
             disableForReducedMotion: true
         });
 
         shootSideConfetti();
-        shootSideConfetti();
     }
 
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             stopContinuousConfetti();
+            pauseAmbientConfetti();
+            stopWishAutoScroll();
+            stopNavAutoScroll();
         } else if (invitationOpened) {
+            ambientConfettiEl?.classList.remove("is-paused");
             startContinuousConfetti();
+            if (!lowPowerMode) {
+                setupWishAutoScroll();
+                if (!navAutoPaused) startNavAutoScroll();
+            }
         }
     });
 
-    // Sparkle Canvas (Simplified Trail)
+    // Sparkle canvas — desktop only, pauses when idle
     const canvas = document.getElementById("sparkleCanvas");
-    if (canvas) {
+    if (canvas && !lowPowerMode) {
         const ctx = canvas.getContext("2d");
         let particles = [];
-        
-        function resize() {
+        let sparkleRaf = null;
+        let lastSparkleAt = 0;
+
+        function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
-        window.addEventListener("resize", resize);
-        resize();
+        window.addEventListener("resize", resizeCanvas, { passive: true });
+        resizeCanvas();
 
         function addSparkle(x, y) {
-            for (let i = 0; i < 2; i++) {
-                particles.push({
-                    x, y,
-                    size: Math.random() * 3 + 1,
-                    speedX: (Math.random() - 0.5) * 2,
-                    speedY: (Math.random() - 0.5) * 2,
-                    alpha: 1,
-                    color: Math.random() > 0.6 ? "#22d3ee" : Math.random() > 0.3 ? "#60a5fa" : "#ffffff"
-                });
+            const now = Date.now();
+            if (now - lastSparkleAt < 60) return;
+            lastSparkleAt = now;
+
+            particles.push({
+                x, y,
+                size: Math.random() * 2.5 + 1,
+                speedX: (Math.random() - 0.5) * 1.6,
+                speedY: (Math.random() - 0.5) * 1.6,
+                alpha: 1,
+                color: Math.random() > 0.6 ? "#22d3ee" : Math.random() > 0.3 ? "#60a5fa" : "#ffffff"
+            });
+
+            if (particles.length > 48) particles = particles.slice(-48);
+            startSparkleLoop();
+        }
+
+        function drawSparkles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = particles.length - 1; i >= 0; i -= 1) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.alpha -= 0.03;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalAlpha = 1;
+
+            if (particles.length > 0 && !document.hidden) {
+                sparkleRaf = requestAnimationFrame(drawSparkles);
+            } else {
+                sparkleRaf = null;
             }
         }
 
-        window.addEventListener("mousemove", (e) => addSparkle(e.clientX, e.clientY));
-        window.addEventListener("touchmove", (e) => {
-            const touch = e.touches[0];
-            if (touch) addSparkle(touch.clientX, touch.clientY);
-        }, { passive: true });
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, i) => {
-                p.x += p.speedX;
-                p.y += p.speedY;
-                p.alpha -= 0.02;
-                if(p.alpha <= 0) {
-                    particles.splice(i, 1);
-                } else {
-                    ctx.globalAlpha = p.alpha;
-                    ctx.fillStyle = p.color;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-            requestAnimationFrame(animate);
+        function startSparkleLoop() {
+            if (sparkleRaf || document.hidden) return;
+            sparkleRaf = requestAnimationFrame(drawSparkles);
         }
-        animate();
+
+        window.addEventListener("mousemove", (e) => addSparkle(e.clientX, e.clientY), { passive: true });
+    } else if (canvas) {
+        canvas.hidden = true;
     }
 });
