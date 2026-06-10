@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=41">
+    <link rel="stylesheet" href="styles.css?v=46">
 </head>
 <body>
 
@@ -26,6 +26,7 @@
     </div>
     <audio id="bgMusic" loop preload="auto" src="assets/background-music.mp3" aria-hidden="true"></audio>
     <canvas id="sparkleCanvas"></canvas>
+    <div id="ambientConfetti" class="ambient-confetti" aria-hidden="true"></div>
 
     <div id="loader" role="button" tabindex="0" aria-label="Chạm để mở thiệp mời">
         <div class="loader-envelope">
@@ -215,7 +216,7 @@
                         <div class="rsvp-bento-inner">
                             <div class="rsvp-col rsvp-col-form">
                                 <header class="rsvp-col-head">
-                                    <span class="rsvp-col-icon" aria-hidden="true"><i class="fa-solid fa-paper-plane"></i></span>
+                                    <span class="rsvp-col-icon" aria-hidden="true"><i class="fa-solid fa-envelope-open-text"></i></span>
                                     <div>
                                         <h3>Phản hồi của bạn</h3>
                                         <p>Điền thông tin bên dưới</p>
@@ -223,22 +224,61 @@
                                 </header>
                                 <form id="rsvp-form" class="rsvp-form">
                                     <div class="field field-modern">
-                                        <label for="input-name">Họ và tên</label>
-                                        <div class="input-wrap">
-                                            <i class="fa-regular fa-user input-icon" aria-hidden="true"></i>
+                                        <label for="input-name"><i class="fa-solid fa-signature field-label-icon" aria-hidden="true"></i> Họ và tên</label>
+                                        <div class="input-wrap input-wrap-premium">
+                                            <span class="input-icon-badge" aria-hidden="true"><i class="fa-solid fa-user-pen"></i></span>
                                             <input type="text" id="input-name" placeholder="Nhập tên của bạn" required autocomplete="name">
                                         </div>
                                     </div>
-                                    <div class="field field-modern"> <label>Tham dự?</label> <div class="choice-group choice-pills"> <label class="choice"> <input type="radio" name="attendance" value="attending" required> <span><i class="fa-solid fa-circle-check"></i> Sẽ đến</span> </label> <label class="choice"> <input type="radio" name="attendance" value="maybe"> <span><i class="fa-solid fa-hourglass-half"></i> Có thể</span> </label> <label class="choice"> <input type="radio" name="attendance" value="absent"> <span><i class="fa-solid fa-user-xmark"></i> Bận rồi</span> </label> </div> </div>
                                     <div class="field field-modern">
-                                        <label for="input-wish">Lời chúc</label>
-                                        <div class="input-wrap input-wrap-area">
-                                            <i class="fa-regular fa-comment-dots input-icon input-icon-area" aria-hidden="true"></i>
+                                        <label><i class="fa-solid fa-calendar-check field-label-icon" aria-hidden="true"></i> Tham dự?</label>
+                                        <div class="choice-group choice-cards">
+                                            <label class="choice choice-card">
+                                                <input type="radio" name="attendance" value="attending" required>
+                                                <span>
+                                                    <span class="choice-icon choice-icon-yes" aria-hidden="true"><i class="fa-solid fa-champagne-glasses"></i></span>
+                                                    <span class="choice-text">
+                                                        <strong>Sẽ đến</strong>
+                                                        <small>Chắc chắn có mặt</small>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                            <label class="choice choice-card">
+                                                <input type="radio" name="attendance" value="maybe">
+                                                <span>
+                                                    <span class="choice-icon choice-icon-maybe" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></span>
+                                                    <span class="choice-text">
+                                                        <strong>Có thể</strong>
+                                                        <small>Đang sắp xếp lịch</small>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                            <label class="choice choice-card">
+                                                <input type="radio" name="attendance" value="absent">
+                                                <span>
+                                                    <span class="choice-icon choice-icon-no" aria-hidden="true"><i class="fa-solid fa-calendar-xmark"></i></span>
+                                                    <span class="choice-text">
+                                                        <strong>Bận rồi</strong>
+                                                        <small>Gửi lời chúc từ xa</small>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="field field-modern">
+                                        <label for="input-wish"><i class="fa-solid fa-feather-pointed field-label-icon" aria-hidden="true"></i> Lời chúc</label>
+                                        <div class="input-wrap input-wrap-premium input-wrap-area">
+                                            <span class="input-icon-badge input-icon-badge-area" aria-hidden="true"><i class="fa-solid fa-quote-left"></i></span>
                                             <textarea id="input-wish" rows="4" placeholder="Viết lời chúc đến Thịnh..."></textarea>
                                         </div>
                                     </div>
-                                    <button type="submit" id="rsvp-submit-btn" class="btn btn-main btn-full btn-send">
-                                        <i class="fa-solid fa-paper-plane"></i> Gửi phản hồi
+                                    <button type="submit" id="rsvp-submit-btn" class="btn btn-main btn-full btn-send btn-rsvp">
+                                        <span class="btn-rsvp-icon" aria-hidden="true"><i class="fa-solid fa-heart"></i></span>
+                                        <span class="btn-rsvp-label">
+                                            <strong>Gửi phản hồi</strong>
+                                            <small>Cảm ơn bạn đã đồng hành cùng Thịnh</small>
+                                        </span>
+                                        <i class="fa-solid fa-arrow-right btn-rsvp-arrow" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             </div>
@@ -255,11 +295,9 @@
                                     <span id="wishes-count" class="wishes-badge">0 lời chúc</span>
                                 </header>
                                 <div id="wishes-box" class="wishes-viewport wishes-book">
-                                    <div class="wishes-fade wishes-fade-top" aria-hidden="true"></div>
                                     <div id="wishes-scroll-inner" class="wishes-scroll-inner">
                                         <div id="wishes-list" class="wishes-track"></div>
                                     </div>
-                                    <div class="wishes-fade wishes-fade-bottom" aria-hidden="true"></div>
                                 </div>
                             </div>
                         </div>
@@ -279,6 +317,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="script.js?v=34"></script>
+    <script src="script.js?v=36"></script>
 </body>
 </html>
