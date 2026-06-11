@@ -565,8 +565,9 @@ const WISHES_API = `${API_BASE}/api/wishes`;
             const res = await fetch(`${WISHES_API}?t=${Date.now()}`, { cache: "no-store" });
             const data = await res.json();
             if (data.success) {
-                renderWishes(data.wishes);
-                localStorage.setItem("graduation_wishes_backup", JSON.stringify(data.wishes));
+                const wishes = data.wishes || [];
+                renderWishes(wishes);
+                localStorage.setItem("graduation_wishes_backup", JSON.stringify(wishes));
             }
         } catch (err) {
             console.warn("Could not load wishes from server:", err);

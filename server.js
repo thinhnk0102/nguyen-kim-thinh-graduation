@@ -3,12 +3,23 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-const WISHES_FILE = path.join(ROOT, "data", "wishes.json");
-const WISHES_BACKUP_FILE = path.join(ROOT, "data", "wishes.backup.json");
-const WISHES_HISTORY_DIR = path.join(ROOT, "data", "backups");
+const DATA_ROOT = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(ROOT, "data");
+const WISHES_FILE = path.join(DATA_ROOT, "wishes.json");
+const WISHES_BACKUP_FILE = path.join(DATA_ROOT, "wishes.backup.json");
+const WISHES_HISTORY_DIR = path.join(DATA_ROOT, "backups");
 const MAX_WISH_BACKUPS = 30;
+
+let wishMutationChain = Promise.resolve();
+
+function runWishMutation(mutator) {
+  const job = wishMutationChain.then(() => mutator());
+  wishMutationChain = job.catch(() => {});
+  return job;
+}
 
 const ADMIN_USER = process.env.ADMIN_USER || "nguyenkimthinh";
 const ADMIN_PASS = process.env.ADMIN_PASS || "abc@123";
@@ -40,14 +51,32 @@ function ensureWishesFile() {
   }
 }
 
+function parseWishesRaw(raw) {
+  const data = JSON.parse(raw.replace(/^\uFEFF/, ""));
+  return Array.isArray(data) ? data : [];
+}
+
+function readWishesFile(filePath) {
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return parseWishesRaw(raw);
+}
+
 function readWishes() {
   ensureWishesFile();
   try {
-    const raw = fs.readFileSync(WISHES_FILE, "utf-8").replace(/^\uFEFF/, "");
-    const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
+    return readWishesFile(WISHES_FILE);
   } catch (err) {
     console.error("Lỗi đọc wishes.json:", err.message);
+    if (fs.existsSync(WISHES_BACKUP_FILE)) {
+      try {
+        const restored = readWishesFile(WISHES_BACKUP_FILE);
+        console.warn(`Khôi phục ${restored.length} lời chúc từ wishes.backup.json`);
+        writeWishes(restored, { skipBackup: true });
+        return restored;
+      } catch (backupErr) {
+        console.error("Không đọc được backup:", backupErr.message);
+      }
+    }
     return [];
   }
 }
@@ -140,10 +169,27 @@ function resolveBackupFile(source) {
   return null;
 }
 
-function writeWishes(wishes) {
+function writeWishes(wishes, options = {}) {
   ensureWishesFile();
-  backupWishesFile();
-  fs.writeFileSync(WISHES_FILE, JSON.stringify(wishes, null, 2), "utf-8");
+  const list = Array.isArray(wishes) ? wishes : [];
+
+  if (!options.skipBackup) {
+    try {
+      const before = fs.existsSync(WISHES_FILE) ? readWishesFile(WISHES_FILE) : [];
+      if (before.length > list.length) {
+        console.warn(
+          `Cảnh báo: số lời chúc giảm ${before.length} → ${list.length}. Kiểm tra ghi đồng thời hoặc deploy Render.`
+        );
+      }
+    } catch {
+      /* ignore compare errors */
+    }
+    backupWishesFile();
+  }
+
+  const tmpFile = `${WISHES_FILE}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(list, null, 2), "utf-8");
+  fs.renameSync(tmpFile, WISHES_FILE);
 }
 
 function parseCookies(req) {
@@ -322,45 +368,50 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const wishes = readWishes();
-      const index = wishes.findIndex((w) => w.id === wishId);
+      const result = await runWishMutation(() => {
+        const wishes = readWishes();
+        const index = wishes.findIndex((w) => w.id === wishId);
 
-      if (index === -1) {
-        sendJSON(res, 404, { success: false, message: "Không tìm thấy lời chúc này." });
+        if (index === -1) {
+          return { error: { status: 404, message: "Không tìm thấy lời chúc này." } };
+        }
+
+        const wish = { ...wishes[index] };
+
+        if (!String(wish.reply || "").trim()) {
+          return { error: { status: 400, message: "Thịnh chưa trả lời lời chúc này." } };
+        }
+
+        const comment = {
+          id: `rc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: name.slice(0, 50),
+          anonymous: isAnonymous,
+          text,
+          createdAt: new Date().toISOString(),
+        };
+
+        wish.replyComments = Array.isArray(wish.replyComments) ? wish.replyComments : [];
+        if (wish.replyComments.length >= 100) {
+          return { error: { status: 400, message: "Đã đạt giới hạn trả lời cho lời chúc này." } };
+        }
+
+        wish.replyComments.push(comment);
+        wishes[index] = wish;
+        writeWishes(wishes);
+        return { comment, wish, wishes };
+      });
+
+      if (result.error) {
+        sendJSON(res, result.error.status, { success: false, message: result.error.message });
         return;
       }
-
-      const wish = { ...wishes[index] };
-
-      if (!String(wish.reply || "").trim()) {
-        sendJSON(res, 400, { success: false, message: "Thịnh chưa trả lời lời chúc này." });
-        return;
-      }
-
-      const comment = {
-        id: `rc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name: name.slice(0, 50),
-        anonymous: isAnonymous,
-        text,
-        createdAt: new Date().toISOString(),
-      };
-
-      wish.replyComments = Array.isArray(wish.replyComments) ? wish.replyComments : [];
-      if (wish.replyComments.length >= 100) {
-        sendJSON(res, 400, { success: false, message: "Đã đạt giới hạn trả lời cho lời chúc này." });
-        return;
-      }
-
-      wish.replyComments.push(comment);
-      wishes[index] = wish;
-      writeWishes(wishes);
 
       sendJSON(res, 201, {
         success: true,
         message: "Đã gửi trả lời.",
-        comment,
-        wish,
-        wishes,
+        comment: result.comment,
+        wish: result.wish,
+        wishes: result.wishes,
       });
       return;
     } catch (err) {
@@ -386,17 +437,19 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const newWish = {
-        id: `wish-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name,
-        attendance,
-        wish,
-        createdAt: new Date().toISOString(),
-      };
-
-      const wishes = readWishes();
-      wishes.push(newWish);
-      writeWishes(wishes);
+      const { newWish, wishes } = await runWishMutation(() => {
+        const created = {
+          id: `wish-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name,
+          attendance,
+          wish,
+          createdAt: new Date().toISOString(),
+        };
+        const list = readWishes();
+        list.push(created);
+        writeWishes(list);
+        return { newWish: created, wishes: list };
+      });
 
       sendJSON(res, 201, { success: true, wish: newWish, wishes });
       return;
@@ -474,11 +527,14 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
 
       if (Array.isArray(body.wishes)) {
-        writeWishes(body.wishes);
+        const imported = await runWishMutation(() => {
+          writeWishes(body.wishes);
+          return readWishes();
+        });
         sendJSON(res, 200, {
           success: true,
-          message: `Đã nhập ${body.wishes.length} lời chúc.`,
-          wishes: readWishes(),
+          message: `Đã nhập ${imported.length} lời chúc.`,
+          wishes: imported,
         });
         return;
       }
@@ -489,8 +545,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const restored = readWishesFromFile(backupFile);
-      writeWishes(restored);
+      const restored = await runWishMutation(() => {
+        const list = readWishesFromFile(backupFile);
+        writeWishes(list);
+        return list;
+      });
       sendJSON(res, 200, {
         success: true,
         message: `Đã khôi phục ${restored.length} lời chúc.`,
@@ -505,7 +564,10 @@ const server = http.createServer(async (req, res) => {
 
   if (urlPath === "/api/admin/wishes" && req.method === "DELETE") {
     if (!requireAuth(req, res)) return;
-    writeWishes([]);
+    await runWishMutation(() => {
+      writeWishes([]);
+      return [];
+    });
     sendJSON(res, 200, { success: true, message: "Đã xóa toàn bộ lời chúc.", wishes: [] });
     return;
   }
@@ -518,70 +580,84 @@ const server = http.createServer(async (req, res) => {
     try {
       const wishId = wishIdMatch[1];
       const body = await parseBody(req);
-      const wishes = readWishes();
-      const index = wishes.findIndex((w) => w.id === wishId);
 
-      if (index === -1) {
-        sendJSON(res, 404, { success: false, message: "Không tìm thấy lời chúc này." });
+      const result = await runWishMutation(() => {
+        const wishes = readWishes();
+        const index = wishes.findIndex((w) => w.id === wishId);
+
+        if (index === -1) {
+          return { error: { status: 404, message: "Không tìm thấy lời chúc này." } };
+        }
+
+        const wish = { ...wishes[index] };
+
+        if (Object.prototype.hasOwnProperty.call(body, "reply")) {
+          const reply = String(body.reply || "").trim();
+          if (reply) {
+            wish.reply = reply;
+            wish.replyAt = new Date().toISOString();
+          } else {
+            delete wish.reply;
+            delete wish.replyAt;
+          }
+        }
+
+        if (body.clearReply === true) {
+          delete wish.reply;
+          delete wish.replyAt;
+          delete wish.replyComments;
+        }
+
+        if (body.deleteReplyComment) {
+          const commentId = String(body.deleteReplyComment);
+          wish.replyComments = (wish.replyComments || []).filter((c) => c.id !== commentId);
+        }
+
+        const VALID_REACTIONS = new Set(["love", "haha", "moved"]);
+
+        if (Object.prototype.hasOwnProperty.call(body, "reaction")) {
+          const reaction = body.reaction;
+          if (reaction === null || reaction === "") {
+            delete wish.reaction;
+            delete wish.reactionAt;
+          } else if (VALID_REACTIONS.has(reaction)) {
+            wish.reaction = reaction;
+            wish.reactionAt = new Date().toISOString();
+          }
+          delete wish.liked;
+        }
+
+        if (typeof body.liked === "boolean") {
+          if (body.liked) {
+            wish.reaction = "love";
+            wish.reactionAt = wish.reactionAt || new Date().toISOString();
+          } else {
+            delete wish.reaction;
+            delete wish.reactionAt;
+          }
+          delete wish.liked;
+        }
+
+        if (typeof body.pinned === "boolean") {
+          wish.pinned = body.pinned;
+        }
+
+        wishes[index] = wish;
+        writeWishes(wishes);
+        return { wish, wishes };
+      });
+
+      if (result.error) {
+        sendJSON(res, result.error.status, { success: false, message: result.error.message });
         return;
       }
 
-      const wish = { ...wishes[index] };
-
-      if (Object.prototype.hasOwnProperty.call(body, "reply")) {
-        const reply = String(body.reply || "").trim();
-        if (reply) {
-          wish.reply = reply;
-          wish.replyAt = new Date().toISOString();
-        } else {
-          delete wish.reply;
-          delete wish.replyAt;
-        }
-      }
-
-      if (body.clearReply === true) {
-        delete wish.reply;
-        delete wish.replyAt;
-        delete wish.replyComments;
-      }
-
-      if (body.deleteReplyComment) {
-        const commentId = String(body.deleteReplyComment);
-        wish.replyComments = (wish.replyComments || []).filter((c) => c.id !== commentId);
-      }
-
-      const VALID_REACTIONS = new Set(["love", "haha", "moved"]);
-
-      if (Object.prototype.hasOwnProperty.call(body, "reaction")) {
-        const reaction = body.reaction;
-        if (reaction === null || reaction === "") {
-          delete wish.reaction;
-          delete wish.reactionAt;
-        } else if (VALID_REACTIONS.has(reaction)) {
-          wish.reaction = reaction;
-          wish.reactionAt = new Date().toISOString();
-        }
-        delete wish.liked;
-      }
-
-      if (typeof body.liked === "boolean") {
-        if (body.liked) {
-          wish.reaction = "love";
-          wish.reactionAt = wish.reactionAt || new Date().toISOString();
-        } else {
-          delete wish.reaction;
-          delete wish.reactionAt;
-        }
-        delete wish.liked;
-      }
-
-      if (typeof body.pinned === "boolean") {
-        wish.pinned = body.pinned;
-      }
-
-      wishes[index] = wish;
-      writeWishes(wishes);
-      sendJSON(res, 200, { success: true, message: "Đã cập nhật lời chúc.", wish, wishes });
+      sendJSON(res, 200, {
+        success: true,
+        message: "Đã cập nhật lời chúc.",
+        wish: result.wish,
+        wishes: result.wishes,
+      });
       return;
     } catch (err) {
       sendJSON(res, 400, { success: false, message: err.message || "Dữ liệu không hợp lệ." });
@@ -593,16 +669,23 @@ const server = http.createServer(async (req, res) => {
     if (!requireAuth(req, res)) return;
 
     const wishId = wishIdMatch[1];
-    const wishes = readWishes();
-    const filtered = wishes.filter((w) => w.id !== wishId);
 
-    if (filtered.length === wishes.length) {
-      sendJSON(res, 404, { success: false, message: "Không tìm thấy lời chúc này." });
+    const filtered = await runWishMutation(() => {
+      const wishes = readWishes();
+      const next = wishes.filter((w) => w.id !== wishId);
+      if (next.length === wishes.length) {
+        return { error: { status: 404, message: "Không tìm thấy lời chúc này." } };
+      }
+      writeWishes(next);
+      return { wishes: next };
+    });
+
+    if (filtered.error) {
+      sendJSON(res, filtered.error.status, { success: false, message: filtered.error.message });
       return;
     }
 
-    writeWishes(filtered);
-    sendJSON(res, 200, { success: true, message: "Đã xóa lời chúc.", wishes: filtered });
+    sendJSON(res, 200, { success: true, message: "Đã xóa lời chúc.", wishes: filtered.wishes });
     return;
   }
 
@@ -617,6 +700,13 @@ const server = http.createServer(async (req, res) => {
 
 ensureWishesFile();
 server.listen(PORT, () => {
+  const wishCount = readWishes().length;
   console.log(`Server running at http://127.0.0.1:${PORT}`);
   console.log(`Admin panel: http://127.0.0.1:${PORT}/admin.html`);
+  console.log(`Wishes file: ${WISHES_FILE} (${wishCount} lời chúc)`);
+  if (!process.env.DATA_DIR && process.env.RENDER) {
+    console.warn(
+      "Render: gắn Persistent Disk và đặt DATA_DIR để lời chúc không mất khi server restart/deploy."
+    );
+  }
 });
